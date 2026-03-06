@@ -1,112 +1,123 @@
-import React from 'react';
-import { motion, useScroll, useTransform } from 'framer-motion';
+import React, { useRef } from 'react';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { useGSAP } from '@gsap/react';
+
+gsap.registerPlugin(ScrollTrigger);
 
 const Hero = () => {
-  const { scrollY } = useScroll();
-  
-  // Parallax shift for that extra layer of depth when scrolling
-  const xLeft = useTransform(scrollY, [0, 1000], [0, -200]);
-  const xRight = useTransform(scrollY, [0, 1000], [0, 200]);
-  const opacity = useTransform(scrollY, [0, 300], [1, 0]);
+  const container = useRef();
+  const contentWrapper = useRef();
+  const mainText = useRef();
+  const subText = useRef();
+  const revealShield = useRef();
 
-  const images = [
-    "https://images.unsplash.com/photo-1591405351990-4726e331f141?auto=format&fit=crop&q=80&w=800",
-    "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&q=80&w=800",
-    "https://images.unsplash.com/photo-1581092580497-e0d23cbdf1dc?auto=format&fit=crop&q=80&w=800",
-    "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80&w=800",
-  ];
+  useGSAP(() => {
+    const isMobile = window.innerWidth < 768;
+    
+    const tl = gsap.timeline({
+      scrollTrigger: {
+        trigger: container.current,
+        start: "top top",
+        end: "+=200%", 
+        pin: true,
+        scrub: 1,
+      }
+    });
 
-  // We double the images to create a seamless loop
-  const duplicatedImages = [...images, ...images, ...images];
+    // 1. Deconstruct the text content
+    tl.to(mainText.current, {
+      y: isMobile ? -60 : -100,
+      scale: 0.8,
+      opacity: 0,
+      filter: "blur(15px)",
+      ease: "power2.in"
+    })
+    .to(subText.current, {
+      y: 40,
+      opacity: 0,
+      ease: "power2.in"
+    }, "<")
+    
+    // 2. The Modern Transition: The "Shield" lift
+    // This creates the effect of the Hero section being "pulled up" 
+    // to reveal the next section of the website.
+    .to(revealShield.current, {
+      yPercent: -100,
+      ease: "power2.inOut"
+    }, "-=0.3")
+
+    // 3. Optional: Subtle parallax for the bottom UI
+    .to(".bottom-ui", {
+      opacity: 0,
+      y: 20,
+      ease: "power1.out"
+    }, 0);
+
+  }, { scope: container });
 
   return (
-    <section className="relative h-screen w-full flex flex-col items-center justify-center bg-[#FAF9F5] overflow-hidden selection:bg-[#D95D39] selection:text-white md:pt-30">
+    <div ref={container} className="relative h-[100dvh] w-full bg-[#FAF9F6] overflow-hidden">
       
-      {/* 1. BACKGROUND KINETIC GRID (Infinite Loop) */}
-      <div className="absolute inset-0 flex flex-col justify-center gap-4 md:gap-8 opacity-[0.12] pointer-events-none">
-        
-        {/* Row 1: Moving Left */}
-        <div className="flex overflow-hidden">
-          <motion.div 
-            style={{ x: xLeft }}
-            animate={{ x: ["0%", "-50%"] }}
-            transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
-            className="flex gap-4 md:gap-8 whitespace-nowrap"
-          >
-            {duplicatedImages.map((src, i) => (
-              <div key={i} className="w-[300px] h-[180px] md:w-[500px] md:h-[300px] rounded-2xl md:rounded-[2rem] border-2 md:border-4 border-[#1A1A18] overflow-hidden grayscale">
-                <img src={src} className="w-full h-full object-cover" alt="SSM Polytechnic" />
-              </div>
-            ))}
-          </motion.div>
-        </div>
-        
-        {/* Row 2: Moving Right */}
-        <div className="flex overflow-hidden">
-          <motion.div 
-            style={{ x: xRight }}
-            animate={{ x: ["-50%", "0%"] }}
-            transition={{ duration: 35, repeat: Infinity, ease: "linear" }}
-            className="flex gap-4 md:gap-8 whitespace-nowrap"
-          >
-            {duplicatedImages.map((src, i) => (
-              <div key={i} className="w-[300px] h-[180px] md:w-[500px] md:h-[300px] rounded-2xl md:rounded-[2rem] border-2 md:border-4 border-[#1A1A18] overflow-hidden grayscale">
-                <img src={src} className="w-full h-full object-cover" alt="SSM Labs" />
-              </div>
-            ))}
-          </motion.div>
-        </div>
-
-      </div>
-
-      {/* 2. CENTRAL CONTENT ANCHOR */}
-      <div className="relative z-10 container mx-auto px-6 flex flex-col items-center text-center">
-        
-        {/* Removed Badge per request */}
-
-        {/* Massive Responsive Headline */}
-        <motion.h1 
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-          className="text-[15vw] lg:text-[9rem] font-black text-[#1A1A18] leading-[0.8] tracking-tighter mb-8 md:mb-12"
-        >
-          ENGINEER <br />
-          <span className="text-transparent" style={{ WebkitTextStroke: '1.5px #1A1A18' }}>YOUR WAY.</span>
-        </motion.h1>
-
-        {/* Responsive Content Block */}
-        <div className="max-w-3xl">
-          <p className="text-lg md:text-3xl font-black text-[#1A1A18] leading-tight mb-8 md:mb-12">
-            Providing top-quality education and <br className="hidden md:block"/> high-end placements since 1988.
-          </p>
+      {/* --- REVEAL SHIELD (The 'Curtain' that slides up) --- */}
+      <div 
+        ref={revealShield}
+        className="absolute inset-0 z-50 bg-[#FAF9F6] flex flex-col items-center justify-center"
+      >
+        {/* CENTERED TEXT CONTENT */}
+        <div ref={contentWrapper} className="text-center px-6">
+          <div ref={mainText} className="will-change-transform">
+            <h1 className="text-5xl sm:text-7xl md:text-[10vw] lg:text-[12vw] font-black text-[#1A1A1A] leading-[0.85] tracking-tighter uppercase">
+              Binary<br />
+              <span className="text-transparent" style={{ WebkitTextStroke: '1px #1A1A1A' }}>
+                Vision
+              </span>
+            </h1>
+          </div>
           
-          <div className="flex flex-col md:flex-row items-center justify-center gap-6 md:gap-8">
-            <button className="w-full md:w-auto group relative bg-[#D95D39] text-white px-10 md:px-12 py-4 md:py-5 font-black text-xs uppercase tracking-widest overflow-hidden transition-all shadow-[6px_6px_0px_#1A1A18]">
-              <span className="relative z-10">Start Your Journey</span>
-              <div className="absolute inset-0 bg-[#1A1A18] translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
-            </button>
-            
-            <div className="text-center md:text-left md:border-l-4 border-[#1A1A18] md:pl-6">
-              <p className="text-[10px] md:text-xs font-black text-[#4A4843] uppercase tracking-widest">Department Of</p>
-              <p className="text-xs md:text-sm font-black text-[#1A1A18] uppercase">Computer Engineering</p>
-            </div>
+          <div ref={subText} className="mt-4 md:mt-8">
+            <p className="text-[9px] md:text-xs font-bold tracking-[0.4em] uppercase text-black/40 mb-3">
+              Computer Engineering Dept.
+            </p>
+            <div className="h-[1px] w-12 md:w-24 bg-black/20 mx-auto" />
           </div>
         </div>
+
+        {/* BOTTOM UI INSIDE THE SHIELD */}
+        <div className="bottom-ui absolute bottom-6 md:bottom-12 w-full px-8 md:px-12 flex flex-col md:flex-row justify-between items-center md:items-end gap-6">
+          <div className="max-w-[240px] md:max-w-[180px] text-center md:text-left">
+            <p className="text-[8px] md:text-[9px] font-bold text-black/30 uppercase leading-relaxed tracking-widest">
+              Innovating through structured complexity and architectural logic.
+            </p>
+          </div>
+          
+          <button className="w-full md:w-auto px-8 py-4 bg-[#1A1A1A] text-[#FAF9F6] text-[10px] font-bold uppercase tracking-[0.3em]">
+            Enter Department
+          </button>
+        </div>
       </div>
 
-      {/* 3. SCROLL INDICATOR (Hides on Mobile for Cleanliness) */}
-      <motion.div 
-        style={{ opacity }}
-        className="hidden md:flex absolute bottom-10 left-10 items-center gap-4 rotate-[-90deg] origin-left"
-      >
-        <span className="font-mono text-[10px] font-black tracking-widest text-[#1A1A18]/40 uppercase">
-          Slide_to_Scan
-        </span>
-        <div className="w-20 h-px bg-[#1A1A18]/20"></div>
-      </motion.div>
+      {/* --- THE NEXT SECTION PREVIEW (Shown as you scroll) --- */}
+      <div className="absolute inset-0 z-10 bg-white flex items-center justify-center p-12">
+        <div className="max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+            <div className="space-y-6">
+                <h2 className="text-4xl font-black uppercase tracking-tighter">The Laboratory</h2>
+                <p className="text-sm text-black/60 leading-relaxed">
+                    Our department is a sanctuary for those who view code as the new brick and mortar. 
+                    From quantum computing to architectural software design, we build the foundations.
+                </p>
+            </div>
+            <div className="aspect-video bg-neutral-100 overflow-hidden shadow-2xl">
+                <img 
+                    src="https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&q=80&w=2000" 
+                    className="w-full h-full object-cover grayscale opacity-50"
+                    alt="Next Section Preview"
+                />
+            </div>
+        </div>
+      </div>
 
-    </section>
+    </div>
   );
 };
 

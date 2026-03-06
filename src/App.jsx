@@ -11,6 +11,7 @@ import Academics from './pages/Academics';
 import Faculty from './pages/Faculty';
 import Labs from './pages/Labs';
 import Gallery from './pages/Gallery';
+import Contact from './pages/Contact';
 
 const App = () => {
   return (
@@ -28,6 +29,7 @@ const App = () => {
           <Route path='/faculty' element={<Faculty />} />
           <Route path='/labs' element={<Labs />} />
           <Route path='/gallery' element={<Gallery />} />
+          <Route path='/contact' element={<Contact />} />
         </Routes>
       </main>
 
